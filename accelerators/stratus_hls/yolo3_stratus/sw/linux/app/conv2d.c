@@ -169,6 +169,19 @@ void sw_conv_layer (
 
     for (int batch_i = 0;  batch_i < batch_size; batch_i++) {
 	for (int num_filter = 0; num_filter < num_filters; num_filter++) {
+        float mean, var, b_w, b_b;
+		if(num_filter==0){
+			mean = -0.5719402;
+			var = 0.08165007 + 0.00001;
+			b_w = 2.6223972;
+			b_b = -4.316885;
+		}
+		else if(num_filter==1){
+			mean = -0.7738392;
+			var = 0.14167316 + 0.00001;
+			b_w = 1.3536469;
+			b_b = -0.7578076;
+		}
 	    for (int output_row = 0; output_row < output_h; output_row++) {
 		for (int output_col = 0; output_col< output_w; output_col++) {
 		    int k = 0;
@@ -189,10 +202,9 @@ void sw_conv_layer (
 			    }
 			}
 		    }
-		    out_value += biases[num_filter];
-
-		    if (do_relu && out_value < 0)
-			out_value = 0;
+            out_value = (out_value-mean)/sqrt(var) * b_w + b_b;
+            if (out_value < 0)
+			out_value *= 0.1;
 
 		    output[batch_i * num_filters * out_channel_size + num_filter * out_channel_size +
 			   output_row * output_w + output_col] = out_value;
@@ -301,9 +313,9 @@ int main(int argc, char **argv)
 	init_buffer(acc_buf, sw_buf, out_offset);
 
 	// hardware execution
-	printf("\n  Start accelerator execution\n");
-	esp_run(cfg_000, NACC);
-	printf("  Completed accelerator execution\n");
+	// printf("\n  Start accelerator execution\n");
+	// esp_run(cfg_000, NACC);
+	// printf("  Completed accelerator execution\n");
 
 	// software execution
 	printf("\n  Start software execution\n");
